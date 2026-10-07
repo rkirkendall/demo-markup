@@ -135,14 +135,16 @@ function Inspector({ ann, ...p }: Props & { ann: Annotation }) {
           )}
         </span>
       </div>
-      <label className="field">
-        <span>Title</span>
-        <input
-          value={ann.title}
-          placeholder={meta.name}
-          onChange={(e) => p.onChangeAnn(ann.id, { title: e.target.value }, 'title' + ann.id)}
-        />
-      </label>
+      {ann.kind !== 'narration' && (
+        <label className="field">
+          <span>Title</span>
+          <input
+            value={ann.title}
+            placeholder={meta.name}
+            onChange={(e) => p.onChangeAnn(ann.id, { title: e.target.value }, 'title' + ann.id)}
+          />
+        </label>
+      )}
       {ann.kind === 'speed' && (
         <div className="field speed">
           <span>Fit into</span>
@@ -173,6 +175,16 @@ function Inspector({ ann, ...p }: Props & { ann: Annotation }) {
           onChange={(e) => p.onChangeAnn(ann.id, { text: e.target.value }, 'text' + ann.id)}
         />
       </label>
+      {ann.kind === 'narration' && (
+        <label className="toggle check">
+          <input
+            type="checkbox"
+            checked={!!ann.matchAudio}
+            onChange={(e) => p.onChangeAnn(ann.id, { matchAudio: e.target.checked })}
+          />
+          Adjust segment speed to match audio duration
+        </label>
+      )}
       <div className="inspector-foot">
         <button className="danger ghost" onClick={() => p.onDeleteAnn(ann.id)}>
           Delete

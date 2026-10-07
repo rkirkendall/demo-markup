@@ -2,8 +2,9 @@ import { useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useSt
 import type { Ref } from 'react';
 import type { Annotation, Clip, Selection } from './types';
 import { KIND_META } from './types';
-import { annotationSpan, clipLength, clipStarts, fmtTime, totalDuration } from './model';
+import { annotationSpan, clipAt, clipLength, clipStarts, fmtTime, totalDuration } from './model';
 import type { ThumbStrip } from './thumbs';
+import type { Hover } from './HoverFrame';
 
 const PAD = 16;
 const RULER_H = 26;
@@ -38,6 +39,7 @@ interface Props {
   onDropFiles(files: File[], atIndex: number): void;
   onDropMedia(name: string, atIndex: number): void;
   thumbs: Map<string, ThumbStrip>;
+  onHover(h: Hover | null): void;
 }
 
 type Drag =
@@ -68,6 +70,7 @@ export function Timeline(props: Props) {
     onDropFiles,
     onDropMedia,
     thumbs,
+    onHover,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -76,6 +79,11 @@ export function Timeline(props: Props) {
   const pendingScroll = useRef<number | null>(null);
   const [view, setView] = useState({ left: 0, width: 1000 });
   const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const setHover = (h: Hover | null) => {
+    setHoverTime(h?.time ?? null);
+    onHover(h);
+  };
 
   const duration = totalDuration(clips);
   const starts = useMemo(() => clipStarts(clips), [clips]);
@@ -189,21 +197,53 @@ export function Timeline(props: Props) {
     contentRef.current!.setPointerCapture(e.pointerId);
   };
 
+  // Show the hovered frame in the preview pane while over the clip track (not while dragging).
+  const updateHover = (e: React.PointerEvent) => {
+    const rect = contentRef.current!.getBoundingClientRect();
+    const trackTop = rect.top + RULER_H + 6; // .tl-track has a 6px top margin
+    const t = (e.clientX - rect.left - PAD) / pps;
+    const inTrack = e.clientY >= trackTop && e.clientY <= trackTop + CLIP_H;
+    const i = inTrack ? starts.findIndex((s, k) => t >= s && t < s + clipLength(clips[k])) : -1;
+    if (i < 0) {
+      if (hoverTime != null) setHover(null);
+      return;
+    }
+    setHover({ file: clips[i].file, sourceTime: clips[i].sourceIn + t - starts[i], time: t });
+  };
+
+  // While dragging an edge, show the frame at that edge. An end edge shows the last frame inside the range.
+  const showEdge = (t: number, isEnd: boolean) => {
+    const hit = clipAt(clips, t, isEnd ? 'end' : 'start');
+    if (!hit) return;
+    const local = Math.min(Math.max(t - hit.start, 0), clipLength(hit.clip));
+    const sourceTime = Math.max(hit.clip.sourceIn, hit.clip.sourceIn + local - (isEnd ? 0.001 : 0));
+    setHover({ file: hit.clip.file, sourceTime, time: t });
+  };
+
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
-    if (!d) return;
+    if (!d) {
+      if (e.pointerType === 'mouse') updateHover(e);
+      return;
+    }
     const t = timeFromEvent(e);
-    if (d.mode === 'scrub') onSeek(t);
-    else if (d.mode === 'select') {
+    if (d.mode === 'scrub') {
+      if (hoverTime != null) setHover(null);
+      onSeek(t);
+    } else if (d.mode === 'select') {
       if (!d.moved && Math.abs(e.clientX - d.x0) < 4) return;
       d.moved = true;
       const s = snap(t, e);
       setSelection({ start: Math.min(d.t0, s), end: Math.max(d.t0, s) });
+      showEdge(s, s > d.t0);
     } else if (d.mode === 'selEdge') {
       const s = snap(t, e);
       setSelection({ start: Math.min(d.other, s), end: Math.max(d.other, s) });
+      showEdge(s, s > d.other);
     } else if (d.mode === 'ann') {
-      onMoveAnnEdge(d.id, d.which, snap(t, e), false);
+      const s = snap(t, e);
+      onMoveAnnEdge(d.id, d.which, s, false);
+      showEdge(s, d.which === 'end');
     }
   };
 
@@ -211,6 +251,7 @@ export function Timeline(props: Props) {
     const d = drag.current;
     drag.current = null;
     if (!d) return;
+    if (hoverTime != null) setHover(null);
     if (d.mode === 'select' && !d.moved) {
       setSelection(null);
       onSelectAnn(null);
@@ -306,6 +347,7 @@ export function Timeline(props: Props) {
         ref={contentRef}
         style={{ width: contentWidth, height: contentHeight }}
         onPointerMove={onPointerMove}
+        onPointerLeave={() => hoverTime != null && setHover(null)}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         onPointerDown={(e) => startSelect(e)}
@@ -489,6 +531,10 @@ export function Timeline(props: Props) {
               height: CLIP_H,
             }}
           />
+        )}
+
+        {hoverTime != null && (
+          <div className="tl-hover-line" style={{ left: X(hoverTime), top: RULER_H, height: CLIP_H }} />
         )}
 
         {/* Playhead */}

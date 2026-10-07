@@ -35,6 +35,8 @@ export interface Annotation {
   text: string;
   /** For 'speed': how long the range should last after the edit, in seconds. */
   targetDuration?: number;
+  /** For 'narration': retime the range so it lasts as long as the generated audio. */
+  matchAudio?: boolean;
 }
 
 export interface Project {
@@ -88,8 +90,7 @@ export const KIND_META: Record<
     color: '#3ec7a0',
     needsRange: true,
     key: 'N',
-    placeholder:
-      'How to narrate. e.g. "Explain the import flow in a friendly tone. Use my ElevenLabs key (ELEVENLABS_API_KEY) and fit the voice inside this range."',
+    placeholder: 'What should the narration say here?',
   },
   instruction: {
     name: 'Instruction',

@@ -18,6 +18,8 @@ import { Timeline } from './Timeline';
 import type { TimelineHandle } from './Timeline';
 import { Sidebar } from './Sidebar';
 import { useThumbs } from './thumbs';
+import { HoverFrame } from './HoverFrame';
+import type { Hover } from './HoverFrame';
 
 const EMPTY: Project = { clips: [], annotations: [] };
 const KIND_ORDER: AnnotationKind[] = ['label', 'cut', 'speed', 'narration', 'instruction'];
@@ -87,6 +89,7 @@ export function App() {
   const [tab, setTab] = useState<'notes' | 'media'>('notes');
   const [focusToken, setFocusToken] = useState(0);
   const [previewEdits, setPreviewEdits] = useState(false);
+  const [hover, setHover] = useState<Hover | null>(null);
   const [loop, setLoop] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -608,6 +611,7 @@ export function App() {
         <section className="preview">
           <div className="video-wrap" onClick={togglePlay}>
             <video ref={videoRef} playsInline preload="auto" />
+            {hover && <HoverFrame {...hover} strip={thumbs.get(hover.file)} />}
             {!clips.length && (
               <div className="empty">
                 <h2>Drop screen recordings here</h2>
@@ -767,6 +771,7 @@ export function App() {
           onDropFiles={(f, i) => void importFiles(f, i)}
           onDropMedia={(n, i) => void addClips([n], i)}
           thumbs={thumbs}
+          onHover={setHover}
         />
       </section>
 

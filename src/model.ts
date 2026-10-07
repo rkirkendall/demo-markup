@@ -141,7 +141,7 @@ const AGENT_BRIEF = [
   'Annotation types:',
   '- cut: remove this range from the output.',
   '- speed: retime this range so it lasts exactly `targetDuration` seconds (`speedFactor` = original / target).',
-  '- narration: write and generate voice-over that fits inside this range, following `instruction`. Do not let audio spill past the range end.',
+  '- narration: write and generate voice-over for this range, following `instruction`. Do not let audio spill past the range end, unless `adjustSpeedToAudio` is true: then speed up or slow down this range so it lasts exactly as long as the generated audio.',
   '- label: a name for this part of the video. Use it as context for other instructions.',
   '- instruction: free-form direction. A point (`isPoint: true`) applies at that moment; a range applies to that span.',
   'Apply cuts and speed changes last-to-first, or recompute times, so earlier edits do not shift later ones.',
@@ -173,6 +173,7 @@ export function buildSpec(p: Project, mediaDir: string) {
         base.targetDuration = r3(a.targetDuration);
         base.speedFactor = r3(length / a.targetDuration);
       }
+      if (a.kind === 'narration') base.adjustSpeedToAudio = !!a.matchAudio;
       if (isPoint) {
         const hit = clipAt(p.clips, span.start, 'start');
         if (hit) {
