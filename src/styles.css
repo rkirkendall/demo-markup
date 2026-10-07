@@ -878,3 +878,58 @@ code {
   font-size: 12px;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- AI suggestions ---------- */
+.tl-ann.suggested {
+  border-style: dashed;
+  opacity: 0.75;
+}
+.tl-pin.suggested {
+  opacity: 0.75;
+}
+.ann-item.suggested .kind {
+  color: var(--accent);
+}
+.suggest-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  font-size: 12px;
+}
+.suggest-bar span {
+  flex: 1;
+}
+.reason {
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: var(--panel-2);
+  border: 1px solid var(--line-2);
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+.reason.pending {
+  border-style: dashed;
+  border-color: var(--accent);
+  color: var(--text);
+}
+.reason-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.modal.autopilot {
+  width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.modal.autopilot h3,
+.modal.autopilot p {
+  margin: 0;
+}

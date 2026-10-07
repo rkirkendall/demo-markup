@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Annotation, AnnotationKind, Clip, MediaFile, Project, Selection } from './types';
 import { KIND_META } from './types';
 import {
-  agentPrompt,
+  agentPrompt, autopilotPrompt,
   annotationSpan,
   buildSpec,
   clipAt,
@@ -78,7 +78,8 @@ export function App() {
   };
 
   // ---------- UI state ----------
-  const [info, setInfo] = useState({ dir: '', specPath: '' });
+  const [info, setInfo] = useState({ dir: '', specPath: '', appDir: '' });
+  const [showAutopilot, setShowAutopilot] = useState(false);
   const [media, setMedia] = useState<MediaFile[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -135,6 +136,23 @@ export function App() {
       }
     })().catch((e) => flash('Could not load: ' + e));
   }, [refreshMedia]);
+
+  // An agent edited the project file: load its changes as one undoable step.
+  useEffect(() => {
+    const hot = import.meta.hot;
+    if (!hot) return;
+    const onChange = async () => {
+      const r = await fetch('/api/project');
+      if (!r.ok) return;
+      const spec = await r.json();
+      if (!spec?.editor?.clips) return;
+      commit(() => spec.editor);
+      const n = (spec.editor.annotations as Annotation[]).filter((a) => a.suggested).length;
+      flash(n ? `The project was updated: ${n} suggestion${n === 1 ? '' : 's'} to review` : 'The project was updated');
+    };
+    hot.on('demo-markup:project-changed', onChange);
+    return () => hot.off('demo-markup:project-changed', onChange);
+  }, [commit]);
 
   useEffect(() => {
     if (!loaded || !info.dir) return;
@@ -421,6 +439,14 @@ export function App() {
     if (selectedAnnId === id) setSelectedAnnId(null);
   };
 
+  // Suggestions from an AI agent: accepting keeps them, rejecting deletes them.
+  const acceptAll = () =>
+    commit((p) => ({ ...p, annotations: p.annotations.map((a) => (a.suggested ? { ...a, suggested: false } : a)) }));
+  const rejectAll = () => {
+    commit((p) => ({ ...p, annotations: p.annotations.filter((a) => !a.suggested) }));
+    if (projRef.current.annotations.every((a) => a.id !== selectedAnnId)) setSelectedAnnId(null);
+  };
+
   const selectAnn = (id: string | null) => {
     setSelectedAnnId(id);
     if (!id) return;
@@ -638,6 +664,9 @@ export function App() {
           <button className="ghost" onClick={downloadSpec} disabled={!clips.length} title="Download a copy of this project to open later">
             Save project
           </button>
+          <button className="ghost" onClick={() => setShowAutopilot(true)} disabled={!clips.length} title="Have Claude watch the video and suggest edits">
+            Autopilot
+          </button>
           <button className="primary" onClick={copyPrompt} disabled={!clips.length}>
             Copy prompt for AI
           </button>
@@ -706,6 +735,8 @@ export function App() {
           onSelectAnn={selectAnn}
           onChangeAnn={changeAnn}
           onDeleteAnn={deleteAnn}
+          onAcceptAll={acceptAll}
+          onRejectAll={rejectAll}
           onPlayAnn={playAnn}
           onSetAnnToSelection={setAnnToSelection}
           selection={selection}
@@ -814,6 +845,55 @@ export function App() {
 
       {(toast || busy) && <div className="toast">{busy ?? toast}</div>}
       {showHelp && <Help onClose={() => setShowHelp(false)} />}
+      {showAutopilot && (
+        <Autopilot
+          onClose={() => setShowAutopilot(false)}
+          onCopy={async (goal, target) => {
+            await saveNow();
+            await navigator.clipboard.writeText(autopilotPrompt(info.appDir, info.specPath, goal, target));
+            setShowAutopilot(false);
+            flash('Copied. Paste it into Claude Code; suggestions will appear on the timeline.');
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+function Autopilot({ onClose, onCopy }: { onClose(): void; onCopy(goal: string, target: number | null): void }) {
+  const [goal, setGoal] = useState('');
+  const [target, setTarget] = useState('');
+  return (
+    <div className="modal-bg" onClick={onClose}>
+      <div className="modal autopilot" onClick={(e) => e.stopPropagation()}>
+        <h3>Autopilot</h3>
+        <p className="muted">
+          Claude watches the recording, then suggests cuts, speed changes, and narration. Suggestions show up on the
+          timeline for you to accept or reject.
+        </p>
+        <label className="field">
+          <span>What should the video show?</span>
+          <textarea
+            rows={4}
+            autoFocus
+            value={goal}
+            placeholder='e.g. "A quick demo of installing the agent and building a workflow. Condense the agent runs, keep the results."'
+            onChange={(e) => setGoal(e.target.value)}
+          />
+        </label>
+        <label className="field">
+          <span>Target length in seconds (optional)</span>
+          <input type="number" min={5} step={5} value={target} onChange={(e) => setTarget(e.target.value)} />
+        </label>
+        <div className="reason-actions">
+          <button className="ghost" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="primary" onClick={() => onCopy(goal.trim(), Number(target) > 0 ? Number(target) : null)}>
+            Copy prompt for Claude Code
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

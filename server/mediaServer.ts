@@ -90,11 +90,40 @@ export function mediaServer(): Plugin {
   return {
     name: 'demo-markup-media',
     configureServer(server) {
+      // Tell the editor when something else (like an AI agent) changes the project file.
+      let lastSeen = '';
+      const specPathNow = () => path.join(mediaDir(), SPEC_FILE);
+      const read = (p: string) => (fs.existsSync(p) ? fs.readFileSync(p, 'utf8') : '');
+      let watchedPath = specPathNow();
+      lastSeen = read(watchedPath);
+      const timer = setInterval(() => {
+        const p = specPathNow();
+        const now = read(p);
+        if (p !== watchedPath) {
+          watchedPath = p;
+          lastSeen = now;
+          return;
+        }
+        if (now === lastSeen) return;
+        lastSeen = now;
+        try {
+          JSON.parse(now);
+        } catch {
+          return; // mid-write; check again next tick
+        }
+        server.ws.send('demo-markup:project-changed', {});
+      }, 700);
+      server.httpServer?.on('close', () => clearInterval(timer));
+
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://local');
         try {
           if (url.pathname === '/api/info') {
-            return json(res, 200, { dir: mediaDir(), specPath: path.join(mediaDir(), SPEC_FILE) });
+            return json(res, 200, {
+              dir: mediaDir(),
+              specPath: path.join(mediaDir(), SPEC_FILE),
+              appDir: server.config.root,
+            });
           }
           if (url.pathname === '/api/media' && req.method === 'GET') {
             return json(res, 200, listMedia());
@@ -148,6 +177,8 @@ export function mediaServer(): Plugin {
             }
             fs.writeFileSync(specPath, body);
             process.env.DEMO_MARKUP_DIR = dir;
+            watchedPath = specPath;
+            lastSeen = body;
             const missing = [...new Set<string>(spec.editor.clips.map((c: { file: string }) => c.file))].filter(
               (f) => !fs.existsSync(path.join(dir, f)),
             );
@@ -164,6 +195,7 @@ export function mediaServer(): Plugin {
               const body = await readBody(req);
               JSON.parse(body); // validate
               fs.writeFileSync(specPath, body);
+              if (specPath === watchedPath) lastSeen = body;
               return json(res, 200, { ok: true, path: specPath });
             }
           }

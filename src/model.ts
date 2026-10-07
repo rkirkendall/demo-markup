@@ -153,6 +153,7 @@ export function buildSpec(p: Project, mediaDir: string) {
   const starts = clipStarts(p.clips);
   const duration = totalDuration(p.clips);
   const annotations = p.annotations
+    .filter((a) => !a.suggested)
     .map((a) => ({ a, span: annotationSpan(p.clips, a) }))
     .filter((x): x is { a: Annotation; span: { start: number; end: number } } => !!x.span)
     .sort((x, y) => x.span.start - y.span.start)
@@ -215,6 +216,17 @@ export function buildSpec(p: Project, mediaDir: string) {
     // Raw editor state, used to reopen the project. Agents can ignore this.
     editor: p,
   };
+}
+
+export function autopilotPrompt(appDir: string, specPath: string, goal: string, target: number | null) {
+  return [
+    `Run Demo Markup autopilot. Follow the instructions in ${appDir}/AUTOPILOT.md.`,
+    `Project file: ${specPath}`,
+    `Goal: ${goal || 'Make a tight, clear demo of what this recording shows.'}`,
+    target ? `Target length: about ${target} seconds.` : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
 }
 
 export function agentPrompt(specPath: string) {

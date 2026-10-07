@@ -450,7 +450,7 @@ export function Timeline(props: Props) {
               return (
                 <div
                   key={a.id}
-                  className={'tl-pin' + (selected ? ' selected' : '')}
+                  className={'tl-pin' + (selected ? ' selected' : '') + (a.suggested ? ' suggested' : '')}
                   style={{ left: X(span.start) - 7, top: lane * LANE_H + 3, ['--c' as string]: meta.color }}
                   onPointerDown={(e) => {
                     select(e);
@@ -466,7 +466,7 @@ export function Timeline(props: Props) {
             return (
               <div
                 key={a.id}
-                className={'tl-ann' + (selected ? ' selected' : '')}
+                className={'tl-ann' + (selected ? ' selected' : '') + (a.suggested ? ' suggested' : '')}
                 style={{
                   left: X(span.start),
                   width: Math.max(4, (span.end - span.start) * pps),

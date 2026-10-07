@@ -37,6 +37,10 @@ export interface Annotation {
   targetDuration?: number;
   /** For 'narration': retime the range so it lasts as long as the generated audio. */
   matchAudio?: boolean;
+  /** Proposed by an AI agent and not yet accepted. Left out of the edit spec until accepted. */
+  suggested?: boolean;
+  /** Why the agent proposed this. */
+  reason?: string;
 }
 
 export interface Project {

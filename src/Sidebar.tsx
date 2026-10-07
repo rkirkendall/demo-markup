@@ -13,6 +13,8 @@ interface Props {
   onSelectAnn(id: string): void;
   onChangeAnn(id: string, patch: Partial<Annotation>, coalesceKey?: string): void;
   onDeleteAnn(id: string): void;
+  onAcceptAll(): void;
+  onRejectAll(): void;
   onPlayAnn(id: string): void;
   onSetAnnToSelection(id: string): void;
   selection: Selection | null;
@@ -46,8 +48,23 @@ function Notes(p: Props) {
     .filter((x) => x.span)
     .sort((x, y) => x.span!.start - y.span!.start);
 
+  const suggested = p.annotations.filter((a) => a.suggested).length;
+
   return (
     <div className="notes">
+      {suggested > 0 && (
+        <div className="suggest-bar">
+          <span>
+            {suggested} suggestion{suggested === 1 ? '' : 's'} to review
+          </span>
+          <button className="ghost" onClick={p.onRejectAll}>
+            Reject all
+          </button>
+          <button className="primary" onClick={p.onAcceptAll}>
+            Accept all
+          </button>
+        </div>
+      )}
       {sel ? (
         <Inspector key={sel.id} ann={sel} {...p} />
       ) : (
@@ -66,11 +83,11 @@ function Notes(p: Props) {
           return (
             <button
               key={a.id}
-              className={'ann-item' + (a.id === p.selectedAnnId ? ' selected' : '')}
+              className={'ann-item' + (a.id === p.selectedAnnId ? ' selected' : '') + (a.suggested ? ' suggested' : '')}
               onClick={() => p.onSelectAnn(a.id)}
             >
               <span className="dot" style={{ background: meta.color }} />
-              <span className="kind">{meta.name}</span>
+              <span className="kind">{a.suggested ? 'Suggested' : meta.name}</span>
               <span className="title">{a.title || a.text || <i>untitled</i>}</span>
               <span className="time">
                 {fmtTime(span!.start)}
@@ -97,6 +114,22 @@ function Inspector({ ann, ...p }: Props & { ann: Annotation }) {
 
   return (
     <div className="inspector" style={{ ['--c' as string]: meta.color }}>
+      {(ann.suggested || ann.reason) && (
+        <div className={'reason' + (ann.suggested ? ' pending' : '')}>
+          {ann.suggested && <b>Suggested {meta.name.toLowerCase()}. </b>}
+          {ann.reason}
+          {ann.suggested && (
+            <div className="reason-actions">
+              <button className="ghost" onClick={() => p.onDeleteAnn(ann.id)}>
+                Reject
+              </button>
+              <button className="primary" onClick={() => p.onChangeAnn(ann.id, { suggested: false })}>
+                Accept
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="kind-row">
         {kinds.map((k) => (
           <button
