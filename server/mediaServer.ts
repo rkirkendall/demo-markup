@@ -127,6 +127,32 @@ export function mediaServer(): Plugin {
             out.on('error', (e) => json(res, 500, { error: String(e) }));
             return;
           }
+          // Open a saved project: switch to the video folder it points at and make it the current project there.
+          if (url.pathname === '/api/open' && req.method === 'POST') {
+            const spec = JSON.parse(await readBody(req));
+            const dir = typeof spec?.mediaDir === 'string' ? path.resolve(spec.mediaDir) : '';
+            if (!spec?.editor?.clips || !dir) return json(res, 400, { error: 'Not a Demo Markup project file.' });
+            if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+              return json(res, 404, { error: `Video folder not found: ${dir}` });
+            }
+            const specPath = path.join(dir, SPEC_FILE);
+            const body = JSON.stringify(spec, null, 2);
+            // Keep whatever was there before if its edits differ, in case the file being opened is older.
+            if (fs.existsSync(specPath)) {
+              const prev = fs.readFileSync(specPath, 'utf8');
+              let same = false;
+              try {
+                same = JSON.stringify(JSON.parse(prev).editor) === JSON.stringify(spec.editor);
+              } catch {}
+              if (!same) fs.copyFileSync(specPath, path.join(dir, 'demo-markup.previous.json'));
+            }
+            fs.writeFileSync(specPath, body);
+            process.env.DEMO_MARKUP_DIR = dir;
+            const missing = [...new Set<string>(spec.editor.clips.map((c: { file: string }) => c.file))].filter(
+              (f) => !fs.existsSync(path.join(dir, f)),
+            );
+            return json(res, 200, { dir, missing });
+          }
           if (url.pathname === '/api/project') {
             const specPath = path.join(mediaDir(), SPEC_FILE);
             if (req.method === 'GET') {

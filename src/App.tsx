@@ -128,6 +128,11 @@ export function App() {
         }
       }
       setLoaded(true);
+      const opened = sessionStorage.getItem('demo-markup-opened');
+      if (opened) {
+        sessionStorage.removeItem('demo-markup-opened');
+        flash(opened);
+      }
     })().catch((e) => flash('Could not load: ' + e));
   }, [refreshMedia]);
 
@@ -486,13 +491,31 @@ export function App() {
     flash('Copied a prompt for your AI agent. Paste it into Claude Code or Codex.');
   };
 
+  // Saves a copy of the project anywhere. It points at the videos by their full paths, so it can be reopened later.
   const downloadSpec = () => {
     const blob = new Blob([JSON.stringify(buildSpec(projRef.current, info.dir), null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = 'demo-markup.json';
+    const folder = info.dir.split('/').filter(Boolean).pop() ?? 'project';
+    a.download = `${folder}.demo-markup.json`;
     a.click();
     URL.revokeObjectURL(a.href);
+  };
+
+  const openInput = useRef<HTMLInputElement>(null);
+  const openProject = async (file: File) => {
+    try {
+      const r = await fetch('/api/open', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: await file.text() });
+      const res = await r.json();
+      if (!r.ok) return flash(res.error ?? 'Could not open that project.');
+      sessionStorage.setItem(
+        'demo-markup-opened',
+        res.missing.length ? `Opened, but these videos are missing from ${res.dir}: ${res.missing.join(', ')}` : `Opened ${file.name}`,
+      );
+      location.reload();
+    } catch {
+      flash('That file is not a Demo Markup project.');
+    }
   };
 
   // ---------- keyboard ----------
@@ -598,8 +621,22 @@ export function App() {
           <button className="ghost" onClick={() => setShowHelp(true)}>
             Shortcuts
           </button>
-          <button className="ghost" onClick={downloadSpec} disabled={!clips.length}>
-            Download JSON
+          <button className="ghost" onClick={() => openInput.current?.click()} title="Open a saved project file">
+            Open project
+          </button>
+          <input
+            ref={openInput}
+            type="file"
+            accept=".json,application/json"
+            hidden
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = '';
+              if (f) void openProject(f);
+            }}
+          />
+          <button className="ghost" onClick={downloadSpec} disabled={!clips.length} title="Download a copy of this project to open later">
+            Save project
           </button>
           <button className="primary" onClick={copyPrompt} disabled={!clips.length}>
             Copy prompt for AI
