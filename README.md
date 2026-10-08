@@ -14,6 +14,28 @@ Tell Claude Code:
 Install and run https://github.com/rkirkendall/demo-markup
 ```
 
+## Autopilot
+
+Autopilot makes the video with you. It watches your recordings, asks what you want, shows you a draft, and keeps
+iterating. Every edit shows up in the editor as a suggestion you can accept or reject.
+
+Install it as a Claude Code plugin:
+
+```
+claude plugin marketplace add rkirkendall/demo-markup
+claude plugin install demo-markup@demo-markup
+```
+
+Then start Claude Code in the folder with your recordings and say:
+
+```
+Run autopilot on these recordings. My demo script is at script.md.
+```
+
+It needs a [Gemini API key](https://aistudio.google.com/apikey) to watch the video, and an
+[ElevenLabs](https://elevenlabs.io) key for narration. It will tell you how to add them. Your taste is kept in
+`~/.config/demo-markup/style.md` and grows as you correct it.
+
 ## License
 
 MIT

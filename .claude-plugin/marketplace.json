@@ -1,0 +1,14 @@
+{
+  "name": "demo-markup",
+  "metadata": { "description": "Demo Markup: make demo videos from screen recordings with Claude." },
+  "owner": { "name": "Ricky Kirkendall" },
+  "plugins": [
+    {
+      "name": "demo-markup",
+      "description": "Autopilot for demo videos: watches your screen recordings, interviews you, and iterates on drafts.",
+      "source": "./",
+      "category": "productivity",
+      "homepage": "https://github.com/rkirkendall/demo-markup"
+    }
+  ]
+}

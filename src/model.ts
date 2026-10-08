@@ -220,7 +220,7 @@ export function buildSpec(p: Project, mediaDir: string) {
 
 export function autopilotPrompt(appDir: string, specPath: string, goal: string, target: number | null) {
   return [
-    `Run Demo Markup autopilot. Follow the instructions in ${appDir}/AUTOPILOT.md.`,
+    `Run Demo Markup autopilot on this project (the demo-markup autopilot skill; if it is not installed, follow ${appDir}/skills/autopilot/SKILL.md).`,
     `Project file: ${specPath}`,
     `Goal: ${goal || 'Make a tight, clear demo of what this recording shows.'}`,
     target ? `Target length: about ${target} seconds.` : '',

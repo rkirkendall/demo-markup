@@ -1,0 +1,10 @@
+{
+  "name": "demo-markup",
+  "version": "0.2.0",
+  "description": "Turn raw screen recordings into a narrated demo video. Autopilot watches the recordings, interviews you, and iterates on drafts with you; the Demo Markup editor lets you review every edit.",
+  "author": { "name": "Ricky Kirkendall" },
+  "homepage": "https://github.com/rkirkendall/demo-markup",
+  "repository": "https://github.com/rkirkendall/demo-markup",
+  "license": "MIT",
+  "keywords": ["video", "demo", "screen recording", "editing", "narration", "ffmpeg", "gemini", "elevenlabs"]
+}

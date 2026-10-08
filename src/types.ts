@@ -41,6 +41,14 @@ export interface Annotation {
   suggested?: boolean;
   /** Why the agent proposed this. */
   reason?: string;
+  /** For 'narration': seconds after the range start before the voice-over begins. */
+  audioOffset?: number;
+  /** For 'instruction': an effect the renderer applies instead of free-text direction. */
+  effect?: 'freeze' | 'fade-to-black';
+  /** For effect 'freeze': the source frame to show over the range. */
+  freezeFrame?: Anchor;
+  /** For effect 'fade-to-black': seconds the fade takes. */
+  fadeDuration?: number;
 }
 
 export interface Project {
