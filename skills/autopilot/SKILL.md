@@ -36,8 +36,9 @@ read -rs "?<Name> API key: " k && mkdir -p ~/.config/<dir> && (umask 077; printf
 If there is no voice yet, offer to list their ElevenLabs voices (`GET https://api.elevenlabs.io/v1/voices`, free)
 and let them choose. Narration is optional; a silent demo needs no ElevenLabs key.
 
-**Style notes.** Read `~/.config/demo-markup/style.md`. If it does not exist, ask two or three quick taste questions
-(how fast agent runs and typing should go, whether they narrate, how they like to end) and create it.
+**Style notes.** Read `~/.config/demo-markup/style.md`. If it does not exist, copy
+[default-style.md](default-style.md) there, tell the person, and ask two or three quick questions to adjust it (how
+fast agent runs and typing should go, whether they narrate, how they like to end).
 
 **Editor.** If `demo-markup.json` does not exist in the folder, create it with the recordings as clips (format in
 reference.md). Order them by the script if there is one, otherwise by recording time, and say which order you used.
