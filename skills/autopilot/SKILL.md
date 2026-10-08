@@ -100,12 +100,13 @@ should land mid-word or mid-scroll. Read the edits in order: the story should ma
 **Render the draft:**
 
 ```bash
-node "$APP/scripts/render.mjs" demo-markup.json --include-suggested --out draft-v1.mp4 [--allow-tts] [--blend]
+node "$APP/scripts/render.mjs" demo-markup.json --include-suggested --out draft-v1.mp4 [--allow-tts]
 ```
 
 Narration that is not cached costs ElevenLabs credits; the dry run shows how many characters. Ask before the first
-`--allow-tts` unless the style notes say spending on drafts is fine, and report the credits used. Use `--blend` when
-sections are sped up a lot (it smooths cursor motion). Drafts render at 1280 px wide; that is enough to review.
+`--allow-tts` unless the style notes say spending on drafts is fine, and report the credits used. Drafts render at
+1280 px wide; that is enough to review. Only use `--blend` (frame blending in sped-up sections) if the person asks
+for it.
 
 Hand off: the draft's path and length, and a short table of the edits (time range, change, reason).
 
