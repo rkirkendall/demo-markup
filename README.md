@@ -2,7 +2,7 @@
 
 Mark up your screen recordings, then let an AI agent (Claude Code, Codex, etc.) edit them into a demo video.
 
-[![Watch the demo video](docs/demo-thumbnail.png)](docs/demo.mp4)
+[![Watch the demo video](docs/demo-thumbnail.png)](https://cdn.jsdelivr.net/gh/rkirkendall/demo-markup@main/docs/demo.mp4)
 
 *Watch the demo (1:49). Autopilot edited it from about 13 minutes of raw screen recordings.*
 
