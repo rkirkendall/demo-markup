@@ -2,6 +2,10 @@
 
 Mark up your screen recordings, then let an AI agent (Claude Code, Codex, etc.) edit them into a demo video.
 
+[![Watch the demo video](docs/demo-thumbnail.png)](docs/demo.mp4)
+
+*Watch the demo (1:49). Autopilot edited it from about 13 minutes of raw screen recordings.*
+
 Line up clips on a timeline, select parts, and add notes: label, cut, speed up, narrate, or any instruction. The notes are saved as `demo-markup.json` next to your videos. Everything runs locally.
 
 ![Demo Markup editor](docs/screenshot.png)
